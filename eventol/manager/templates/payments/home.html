@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% load static %}
+{% load i18n %}
+{% load filters %}
+{% load cropping thumbnail %}
+{% block other-head %}
+<script type="text/javascript" src="{% static "manager/bower_components/moment/min/moment.min.js" %}"></script>
+<script type="text/javascript" src="{% static "manager/bower_components/eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js" %}"></script>
+<link rel="stylesheet" href="{% static "manager/bower_components/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css" %}"/>
+{% endblock %}
+
+{% block content %}
+<h3 class='row'>{% trans "Pending" %}</h3>
+<div class="row">
+  <div class="panel-group" id="accordion">
+      {% for pending in pending_payments %}
+      <div id="payment-{{ forloop.counter }}" class="panel-collapse collapse">
+          <div class="panel-body">
+              <div class="row">
+                  <div class="col-sm-4">
+                      {% if talk.image %}
+                      <img src="{% cropped_thumbnail talk "cropping" %}" width="100%">
+                      {% else %}
+                      <img src="{% static "manager/img/no-image.png" %}" width="100%">
+                      {% endif %}
+                  </div>
+                  <div class="col-sm-8" style="padding-top: 10px">
+                      <div id='talk-info-{{ forloop.counter }}'>
+                      {% if user.is_authenticated and user|is_organizer:event_slug %}
+                      <div id="edit_talk-{{ forloop.counter }}" class="panel-collapse collapse">
+                          <div class="container col-sm-12">
+                              {% include 'activities/to_talk_form.html' with form=talk.form errors=talk.errors form_id=talk.pk %}
+                          </div>
+                      </div>
+                      <div id="reject_talk-{{ forloop.counter }}" class="panel-collapse collapse">
+                          <div class="container col-sm-12">
+                              {% include 'activities/reject_form.html' with form=talk.reject_form form_id=talk.pk %}
+                          </div>
+                      </div>
+                      {% endif %}
+                  </div>
+              </div>
+          </div>
+      </div>
+      {% empty %}
+          <div class="panel panel-default">
+              <div class="panel-heading">
+                  <h4 class="panel-title">
+                      <div class="accordion-toggle">
+                          {% trans "There isn't any proposed activity yet." %}
+                      </div>
+                  </h4>
+              </div>
+          </div>
+      {% endfor %}
+  </div>
+</div>
+
+<h3 class='row'>{% trans "Accepted" %}</h3>
+<br>
+
+<div class="row">
+  <div class="panel-group" id="accordion">
+  </div>
+</div>
+
+<h3 class='row'>{% trans "Rejected" %}</h3>
+<br>
+
+<div class="row">
+  <div class="panel-group" id="accordion">
+  </div>
+</div>
+
+
+{% endblock %}
+{% block other-script %}
+<script>
+
+  $(document).ready(function() {
+
+    function toggleChevron(e) {
+      $(e.target)
+        .prev('.panel-heading')
+        .find("i.indicator")
+        .toggleClass('fa-chevron-down fa-chevron-up');
+    }
+
+    $('.timepicker').datetimepicker({
+      format: 'HH:mm',
+      icons   : {
+        time: "fa fa-clock-o",
+        date: "fa fa-calendar",
+        up  : "fa fa-arrow-up",
+        down: "fa fa-arrow-down"
+      },
+      stepping: 5
+    });
+
+    $('#accordion')
+      .on('hidden.bs.collapse', toggleChevron)
+      .on('shown.bs.collapse', toggleChevron);
+  });
+</script>
+{% endblock %}

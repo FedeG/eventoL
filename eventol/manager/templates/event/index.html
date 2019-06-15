@@ -5,11 +5,11 @@
 {% load cropping %}
 {% load filters %}
 {% block other-head %}
-    
+
     {% if event is not None and event.css_custom %}
         <link rel="stylesheet" type="text/css" media="all" href="{{ event.css_custom.url }}"/>
     {% endif %}
-    
+
     <link rel="stylesheet"
           type="text/css" href="{% static "manager/bower_components/slick-carousel/slick/slick.css" %}"/>
     <link rel="stylesheet"
@@ -40,6 +40,7 @@
                     <span class="label label-default">{% trans 'I am' %}</span>
                     {% if user|is_organizer:event_slug %}<span class="label label-warning">{% trans 'Organizer' %}</span>{% endif %}
                     {% if user|is_attendee:event_slug %}<span class="label label-info">{% trans 'Attendee' %}</span>{% endif %}
+                    {% if event.payment_required %}<span class="label label-warning">{% trans 'Payment Required' %}</span>{% endif %}
                     {% if event.use_collaborators and user|is_collaborator:event_slug %}<span class="label label-primary">{% trans 'Collaborator' %}</span>{% endif %}
                     {% if event.use_installers and user|is_installer:event_slug %}<span class="label label-success">{% trans 'Installer' %}</span>{% endif %}
                 </p>
@@ -243,6 +244,19 @@
               <div class="col-sm-6">
                   <img src="{% static "manager/img/installations.png" %}" width="100%">
               </div>
+          </div>
+      </div>
+    {% endif %}
+
+    {% if event.payment_required %}
+      <div class="well">
+          <div class="row" style="text-align: center;">
+              <h2>{% trans 'Payment Information' %}</h2>
+          </div>
+          <div class="row">
+            <div class="col-sm-10 col-sm-offset-1 col-xs-12">
+              {{ event.payment_method_text | safe }}
+            </div>
           </div>
       </div>
     {% endif %}

@@ -183,6 +183,7 @@ class Event(models.Model):
     )
     external_url = models.URLField(_('External URL'), blank=True, null=True, default=None,
                                    help_text=_('http://www.my-awesome-event.com'))
+
     email = models.EmailField(verbose_name=_('Email'))
     event_information = RichTextField(verbose_name=_('Event Info'),
                                       help_text=_('Event Info HTML'),
@@ -192,6 +193,7 @@ class Event(models.Model):
     use_installers = models.BooleanField(_('Use Installers'), default=True)
     use_collaborators = models.BooleanField(_('Use Collaborators'), default=True)
     use_proposals = models.BooleanField(_('Use Proposals'), default=True)
+    payment_required = models.BooleanField(_('Requires Payment'), default=False)
     is_flisol = models.BooleanField(_('Is FLISoL'), default=False)
     use_schedule = models.BooleanField(_('Use Schedule'), default=True)
     place = models.TextField(_('Place'))
@@ -202,6 +204,10 @@ class Event(models.Model):
                                help_text=_('The image must be 700x450 px. You can crop it here.'))
     activities_proposal_form_text = models.TextField(
         blank=True, null=True, help_text=_("A message to show in the activities proposal form"))
+
+    payment_method_text = RichTextField(
+        verbose_name=_("Payment Method Help Text"),
+        blank=True, null=True, help_text=_("A message to show explaining the payment method"))
     template = models.FileField(_('Template'),
                                 upload_to='templates', blank=True, null=True,
                                 help_text=_('Custom template HTML for event index page'))
@@ -579,6 +585,7 @@ class Attendee(models.Model):
     nickname = models.CharField(_('Nickname'), max_length=200, blank=True, null=True)
     email = models.EmailField(_('Email'))
     event = models.ForeignKey(Event, verbose_name=_('Event'))
+    payment_made = models.BooleanField(default=False, verbose_name=_('Payment Made'))
     ticket = models.ForeignKey(Ticket, verbose_name=_('Ticket'), blank=True, null=True)
     is_installing = models.BooleanField(_('Is going to install?'), default=False)
     additional_info = models.CharField(_('Additional Info'), max_length=200, blank=True, null=True,

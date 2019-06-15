@@ -1,7 +1,9 @@
 import cairosvg
 
+from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.utils.translation import ugettext_lazy as _
+from django.template.loader import render_to_string
 
 
 def get_activity_subject(event_name):
@@ -120,3 +122,16 @@ def send_installation_email(event_name, postinstall_email, attendee):
     email.attach_alternative(postinstall_email.message, "text/html")
     email.to = [attendee.email]
     email.send(fail_silently=False)
+
+
+def send_email(destination, subject, template_name, context):
+    body_text = render_to_string(destination + '.txt', context)
+    body_html = render_to_string(destination + '.html', context)
+
+    email = EmailMultiAlternatives()
+    email.body = body_text
+    email.attach_alternative(body_html, 'text/html')
+    email.from_email = settings.EMAIL_FROM
+    email.to = [destination]
+    email.extra_headers = {'Reply-To': settings.EMAIL_FROM}
+    return email.send(fail_silently=False)

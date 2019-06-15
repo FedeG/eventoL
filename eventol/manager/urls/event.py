@@ -46,6 +46,7 @@ event_patterns = [
         name='installer_registration'),
     url(r'^installation$', views.installation, name='installation'),
     url(r'^activities$', views.activities, name='activities'),
+    url(r'^payments$', views.payments, name='payments'),
     url(r'^my_proposals$', views.my_proposals, name='my_proposals'),
     url(r'^activity/(?P<activity_id>\d+)/$', views.activity_detail,
         name='activity_detail'),

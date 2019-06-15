@@ -38,7 +38,7 @@ from manager.forms import (ActivityForm, ActivityProposalForm,
                            AttendeeRegistrationForm,
                            AttendeeRegistrationFromUserForm,
                            AttendeeSearchForm, CollaboratorRegistrationForm,
-                           ContactForm, ContactMessageForm, EventDateForm,
+                           ConfirmPaymentFormSet, ContactForm, ContactMessageForm, EventDateForm,
                            EventDateModelFormset, EventForm,
                            EventImageCroppingForm, EventUserRegistrationForm,
                            EventUserSearchForm, HardwareForm,
@@ -1079,65 +1079,30 @@ def attendee_registration(request, event_slug):
                     request,
                     event_slug,
                     attendee.id,
-                    attendee.email_token)
+                    attendee.email_token
+                )
 
                 if request.user.is_authenticated():
                     return redirect(confirm_url)
-                body_text = _noop(
-                    'Hi! You are receiving this message because you have'
-                    'registered to attend to '
-                    '{event_name}, being held on {event_dates}.\n\n'
-                    'Please follow this link to confirm your email address'
-                    'and we will send you your '
-                    'ticket:\n'
-                    '{confirm_url}\n\n'
-                    'If you encounter any issue, please contact the event organizer in '
-                    '{event_contact_url}.\n\n'
-                    'Happily yours,\n'
-                    '{event_name} and eventoL team'
-                ).format(
-                    event_name=event.name,
-                    event_dates=', '.join([
-                        date_format(eventdate.date, format='SHORT_DATE_FORMAT', use_l10n=True)
-                        for eventdate in EventDate.objects.filter(event=event)
-                    ]),
-                    event_contact_url=reverse('contact', args=[event_slug]),
-                    confirm_url=confirm_url
-                )
-                body_html = _noop(
-                    '<p>Hi! You are receiving this message because you have'
-                    'registered to attend to <strong>'
-                    '{event_name}</strong>, being held on {event_dates}.</p>\n'
-                    '<p>Please <em>follow this link to confirm your email'
-                    'address</em> and we will send you your '
-                    'ticket:<br />\n'
-                    '<a href="{confirm_url}">{confirm_url}</a></p>\n'
-                    '<p>If you encounter any issue, please contact the event organizer in '
-                    '<a href="{event_contact_url}">{event_contact_url}</a>.</p>\n'
-                    '<p>Happily yours,<br />\n'
-                    '{event_name} and <em>eventoL</em> team</p>'
-                ).format(
-                    event_name=event.name,
-                    event_dates=', '.join([
-                        date_format(eventdate.date, format='SHORT_DATE_FORMAT', use_l10n=True)
-                        for eventdate in EventDate.objects.filter(event=event)
-                    ]),
-                    event_contact_url=reverse('contact', args=[event_slug]),
-                    confirm_url=confirm_url
-                )
 
-                email = EmailMultiAlternatives()
-                email.subject = _('[eventoL] Please confirm your email')
-                email.body = body_text
-                email.attach_alternative(body_html, 'text/html')
-                email.from_email = settings.EMAIL_FROM
-                email.to = [attendee.email]
-                email.extra_headers = {'Reply-To': settings.EMAIL_FROM}
-                email.send(fail_silently=False)
+                subject = _('[eventoL] Please confirm your email')
+                template_name = 'email/confirm_email_address'
+                context = {
+                    'event_name': event.name,
+                    'event_dates': ', '.join([
+                        date_format(eventdate.date, format='SHORT_DATE_FORMAT', use_l10n=True)
+                        for eventdate in EventDate.objects.filter(event=event)
+                    ]),
+                    'event_contact_url': reverse('contact', args=[event_slug]),
+                    'confirm_url': confirm_url,
+                    'payment_required': event.payment_required,
+                    'payment_method_text': event.payment_method_text,
+                }
+                utils_email.send_email(attendee.email, subject, template_name, context)
+
                 return redirect(
                     reverse(
-                        'attendee_email_sent',
-                        args=[event_slug]
+                        'attendee_email_sent', args=[event_slug]
                     )
                 )
             except Exception as error_message:
@@ -1600,6 +1565,23 @@ def activities(request, event_slug):
                 'proposed_activities': proposed_activities,
                 'accepted_activities': accepted_activities,
                 'rejected_activities': rejected_activities
+            }
+        )
+    )
+
+
+@login_required
+@user_passes_test(is_organizer, 'index')
+def payments(request, event_slug):
+    event = get_object_or_404(Event, event_slug=event_slug)
+    attendees = Attendee.objects.filter(event=event)
+    formset = ConfirmPaymentFormSet(queryset=attendees)
+    return render(
+        request, 'payments/home.html',
+        update_event_info(
+            event_slug,
+            {
+                'formset': formset,
             }
         )
     )

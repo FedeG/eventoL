@@ -135,6 +135,13 @@
                                       <i class="fa fa-bar-chart"></i> {% trans "View Reports" %}
                                   </a>
                               </li>
+                              {% if event.payment_required %}
+                              <li>
+                                  <a href="{% url "payments" event_slug %}">
+                                      <i class="fa fa-th"></i> {% trans "Manage Payments" %}
+                                  </a>
+                              </li>
+                              {% endif %}
                             </ul>
                         </li>
                         {% if user|show_collaborators_tab:event %}
